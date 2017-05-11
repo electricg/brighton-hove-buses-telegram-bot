@@ -1,0 +1,45 @@
+{
+  "name": "brighton-hove-buses-telegram-bot",
+  "version": "0.0.1",
+  "description": "A Telegram bot for the Brighton & Hove Buses",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "lint": "./node_modules/.bin/jshint . --exclude-path .gitignore --reporter=./node_modules/jshint-full-path/index.js",
+    "covertest": "rm -rf coverage && ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/{**,**/*}/*.test.js",
+    "pretest": "npm run-script lint",
+    "test": "npm run-script covertest",
+    "posttest": "./node_modules/.bin/istanbul check-coverage --statements 100 --functions 100 --branches 100 --lines 100"
+  },
+  "engines": {
+    "node": "6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://electricg@github.com/electricg/brighton-hove-buses-telegram-bot.git"
+  },
+  "author": "Giulia Alfonsi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/electricg/brighton-hove-buses-telegram-bot/issues"
+  },
+  "homepage": "https://github.com/electricg/brighton-hove-buses-telegram-bot#readme",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "cheerio": "^0.22.0",
+    "hapi": "^16.1.1",
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
+    "nconf": "^0.8.4",
+    "node-telegram-bot-api": "^0.27.1",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "jshint": "^2.9.4",
+    "jshint-full-path": "^1.1.1",
+    "mocha": "^3.3.0",
+    "nock": "^9.0.13",
+    "should": "^11.2.1"
+  }
+}
