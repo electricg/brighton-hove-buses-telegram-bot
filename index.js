@@ -1,7 +1,41 @@
+const TelegramBot = require('node-telegram-bot-api');
 const config = require('./lib/config');
-const bot = require('./lib/telegram');
-
+const telegram = require('./lib/telegram');
 
 const token = config.get('telegramToken');
+const url = config.get('appUrl');
 
-bot.start(token);
+
+const start = () => {
+  let options = {};
+
+  if (config.get('isProduction')) {
+    options.webHook = {
+      port: process.env.PORT
+    };
+  }
+  else {
+    options.polling = true;
+  }
+
+  const bot = new TelegramBot(token, options);
+
+  if (config.get('isProduction')) {
+    bot.setWebHook(url + '/bot' + token);
+  }
+
+  bot.on('callback_query', (callbackQuery) => {
+    const action = callbackQuery.data;
+    const msg = callbackQuery.message;
+    const match = telegram.findMatches(action);
+
+    telegram.sendResponse(bot, msg, match);
+  });
+
+  bot.onText(telegram.busStopRegEx, (msg, match) => {
+    telegram.sendResponse(bot, msg, match);
+  });
+};
+
+
+start();
