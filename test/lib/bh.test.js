@@ -5,18 +5,19 @@ const nock = require('nock');
 const rewire = require('rewire');
 
 const _bh = rewire('../../lib/bh');
+const _getStopsListData = _bh.__get__('getStopsListData');
 const _getStop = _bh.__get__('getStop');
 const _parseStop = _bh.__get__('parseStop');
 const _getData = _bh.__get__('getData');
+const _getNearbyLocations = _bh.__get__('getNearbyLocations');
+const _getNearbyStops = _bh.__get__('getNearbyStops');
 
-const bhUrl = 'http://www.buscms.com/api/REST/html';
-const qs = {
-  'clientid': 'BrightonBuses2016',
-  'format': 'json',
-  'sourcetype': 'siri',
-  'requestor': 'LD',
-  'includeTimestamp': 'true'
-};
+const bhUrl1 = _bh.__get__('bhUrl1');
+const bhUrl2 = _bh.__get__('bhUrl2');
+const qs1 = _bh.__get__('qs1');
+const qs2 = _bh.__get__('qs2');
+const page1 = _bh.__get__('page1');
+const page2 = _bh.__get__('page2');
 
 const check6509 = fs.readFileSync('./test/data/6509.txt', 'utf8');
 const check65097 = fs.readFileSync('./test/data/6509-7.txt', 'utf8');
@@ -25,6 +26,7 @@ const content65097 = fs.readFileSync('./test/data/6509-7.html', 'utf8');
 const content000 = fs.readFileSync('./test/data/000.html', 'utf8');
 const contentxxx = fs.readFileSync('./test/data/xxx.html', 'utf8');
 const content6509777 = fs.readFileSync('./test/data/6509-777.html', 'utf8');
+const contentstops = fs.readFileSync('./test/data/stops.html', 'utf8');
 
 const stopid = '6509';
 const stopcode = 'briapaw';
@@ -39,24 +41,24 @@ describe('bh', () => {
 
   beforeEach((done) => {
     if (!live) {
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: stopid }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: stopid }))
           .reply(200, content6509)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: stopid, servicenamefilter: servicename }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
           .reply(200, content65097)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: stopcode }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: stopcode }))
           .reply(200, content6509)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: stopcode, servicenamefilter: servicename }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
           .reply(200, content65097)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: wrongStopid }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: wrongStopid }))
           .reply(200, content000)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: wrongStopcode }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: wrongStopcode }))
           .reply(200, contentxxx)
       ;
     }
@@ -67,6 +69,113 @@ describe('bh', () => {
   afterEach((done) => {
     nock.cleanAll();
     done();
+  });
+
+  describe('getStopsListData', () => {
+    it('should succeed', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, contentstops);
+
+      _getStopsListData()
+        .then((res) => {
+          res.result.length.should.not.equal(0);
+          done();
+        })
+        .catch((err) => done(err));
+    });
+
+    it('should fail when server returns an error', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .replyWithError('fake error');
+
+      _getStopsListData()
+        .then(() => {
+          done('There should be an error');
+        })
+        .catch((err) => {
+          err.statusCode.should.equal(503);
+          err.body.should.equal('fake error');
+          done();
+        });
+    });
+
+    it('should fail when server returns something different from 200', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(400, 'error');
+
+      _getStopsListData('errorId')
+        .then(() => {
+          done('There should be an error');
+        })
+        .catch((err) => {
+          err.statusCode.should.equal(400);
+          err.body.should.equal('error');
+          done();
+        });
+    });
+  });
+
+  describe('getNearbyLocations', () => {
+    const list = JSON.parse(contentstops.replace(/^\(/, '').replace(/\);$/, ''));
+
+    it('should succeed', (done) => {
+      const here = {
+        latitude: '50.8306925129872',
+        longitude: '-0.148075984124083'
+      };
+      const output = _getNearbyLocations(here, list.result);
+      Object.keys(output).length.should.equal(4);
+      done();
+    });
+  });
+
+  describe('getNearbyStops', () => {
+    it('should succeed', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, contentstops);
+
+      const here = {
+        latitude: '50.8306925129872',
+        longitude: '-0.148075984124083'
+      };
+
+      _getNearbyStops(here)
+        .then((res) => {
+          Object.keys(res).length.should.equal(4);
+          done();
+        })
+        .catch((err) => done(err));
+    });
+
+    it('should fail', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .replyWithError('fake error');
+
+      const here = {
+        latitude: '50.8306925129872',
+        longitude: '-0.148075984124083'
+      };
+
+      _getNearbyStops(here)
+        .then(() => {
+          done('There should be an error');
+        })
+        .catch((err) => {
+          err.statusCode.should.equal(503);
+          err.body.should.equal('fake error');
+          done();
+        });
+    });
   });
 
   describe('getStop', () => {
@@ -151,9 +260,9 @@ describe('bh', () => {
     });
 
     it('should fail when server returns an error', (done) => {
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: 'errorId' }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
           .replyWithError('fake error');
 
       _getStop('errorId')
@@ -168,9 +277,9 @@ describe('bh', () => {
     });
 
     it('should fail when server returns something different from 200', (done) => {
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: 'errorId' }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
           .reply(400, 'error');
 
       _getStop('errorId')
@@ -278,9 +387,9 @@ describe('bh', () => {
     });
 
     it('should fail', (done) => {
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: 'errorId' }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
           .reply(400, 'error');
 
       _getData('errorId')

@@ -35,6 +35,18 @@ const start = () => {
   bot.onText(telegram.busStopRegEx, (msg, match) => {
     telegram.sendResponse(bot, msg, match);
   });
+
+  bot.onText(/\/help/, (msg, match) => {
+    console.log(msg, match);
+  });
+
+  bot.onText(/\/location/, (msg) => {
+    telegram.askLocation(bot, msg);
+  });
+
+  bot.on('location', (msg) => {
+    telegram.sendLocation(bot, msg);
+  });
 };
 
 
