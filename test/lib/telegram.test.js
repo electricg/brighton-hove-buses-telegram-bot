@@ -7,22 +7,25 @@ const sinon = require('sinon');
 
 const _telegram = rewire('../../lib/telegram');
 const _createResponse = _telegram.__get__('createResponse');
+const _createResponseLocation = _telegram.__get__('createResponseLocation');
 const _sendResponse = _telegram.__get__('sendResponse');
 const _findMatches = _telegram.__get__('findMatches');
+const _sendLocation = _telegram.__get__('sendLocation');
+const _askLocation = _telegram.__get__('askLocation');
 
-const bhUrl = 'http://www.buscms.com/api/REST/html';
-const qs = {
-  'clientid': 'BrightonBuses2016',
-  'format': 'json',
-  'sourcetype': 'siri',
-  'requestor': 'LD',
-  'includeTimestamp': 'true'
-};
+const _bh = rewire('../../lib/bh');
+const bhUrl1 = _bh.__get__('bhUrl1');
+const bhUrl2 = _bh.__get__('bhUrl2');
+const qs1 = _bh.__get__('qs1');
+const qs2 = _bh.__get__('qs2');
+const page1 = _bh.__get__('page1');
+const page2 = _bh.__get__('page2');
 
 const content6509 = fs.readFileSync('./test/data/6509.html', 'utf8');
 const content65097 = fs.readFileSync('./test/data/6509-7.html', 'utf8');
 const content000 = fs.readFileSync('./test/data/000.html', 'utf8');
 const contentxxx = fs.readFileSync('./test/data/xxx.html', 'utf8');
+const contentstops = fs.readFileSync('./test/data/stops.html', 'utf8');
 
 const stopid = '6509';
 const stopcode = 'briapaw';
@@ -37,24 +40,24 @@ describe('telegram', () => {
 
   beforeEach((done) => {
     if (!live) {
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: stopid }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: stopid }))
           .reply(200, content6509)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: stopid, servicenamefilter: servicename }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
           .reply(200, content65097)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: stopcode }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: stopcode }))
           .reply(200, content6509)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: stopcode, servicenamefilter: servicename }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
           .reply(200, content65097)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopid: wrongStopid }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopid: wrongStopid }))
           .reply(200, content000)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: wrongStopcode }))
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: wrongStopcode }))
           .reply(200, contentxxx)
       ;
     }
@@ -122,9 +125,9 @@ describe('telegram', () => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: errorStopid }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
           .reply(800, 'error');
 
       _createResponse(messageId, errorStopid)
@@ -144,12 +147,62 @@ describe('telegram', () => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: errorStopid }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
           .replyWithError('fake error');
 
       _createResponse(messageId, errorStopid)
+        .then((res) => {
+          const expectedOutput = {
+            message: 'There was a problem contacting the server',
+            opts: {}
+          };
+
+          _.isEqual(res, expectedOutput).should.equal(true);
+          done();
+        })
+        .catch((err) => done(err));
+    });
+  });
+
+  describe('createResponseLocation', () => {
+    it('should succeed', (done) => {
+      const messageId = 'abc';
+      const here = {
+        latitude: '50.8306925129872',
+        longitude: '-0.148075984124083'
+      };
+      const range = 100;
+
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, contentstops);
+
+      _createResponseLocation(messageId, here, range)
+        .then((res) => {
+          const expectedOutput = {
+            message: 'Bus stops found:\n',
+            opts: {
+              'reply_to_message_id': 'abc',
+              'reply_markup': '{"inline_keyboard":[[{"text":"Seven Dials W (briagmj)","callback_data":"briagmj"}],[{"text":"Seven Dials SE (brijdag)","callback_data":"brijdag"}],[{"text":"Seven Dials NW (brimdwd)","callback_data":"brimdwd"}],[{"text":"Seven Dials SW (briajwj)","callback_data":"briajwj"}]]}'
+            }
+          };
+
+          _.isEqual(res, expectedOutput).should.equal(true);
+          done();
+        })
+        .catch((err) => done(err));
+    });
+
+    it('should succeed with a not 200 from the bus server', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(800, 'error');
+
+      _createResponseLocation()
         .then((res) => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
@@ -232,9 +285,9 @@ describe('telegram', () => {
       const match = ['', errorStopid];
       const spy = sinon.spy(fx, 'log');
 
-      nock(bhUrl)
-        .get('/departureboard.aspx')
-          .query(_.assignIn({}, qs, { stopcode: errorStopid }))
+      nock(bhUrl1)
+        .get(page1)
+          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
           .replyWithError('fake error');
 
       _sendResponse(bot, msg, match);
@@ -281,6 +334,106 @@ describe('telegram', () => {
         _.isEqual(output[2], item.output[2]).should.equal(true);
         done();
       });
+    });
+  });
+
+  describe('sendLocation', () => {
+    const fx = {
+      log: (chatId, message, opts) => {
+        return { chatId, message, opts };
+      }
+    };
+    const bot = {
+      sendMessage: (chatId, message, opts) => {
+        const o = JSON.stringify(opts) || 'x';
+        fx.log(chatId, message[0], o[0]);
+      }
+    };
+    const msg = {
+      chat: {
+        id: '123'
+      },
+      'message_id': 'abc',
+      location: {
+        latitude: '50.8306925129872',
+        longitude: '-0.148075984124083'
+      }
+    };
+
+    it('should succeed', (done) => {
+      const spy = sinon.spy(fx, 'log');
+
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, contentstops);
+
+      _sendLocation(bot, msg);
+
+      setTimeout(() => {
+        spy.withArgs('123', 'L', 'x').calledOnce.should.equal(true);
+        spy.withArgs('123', 'B', '{').calledOnce.should.equal(true);
+
+        fx.log.restore();
+        done();
+      }, 1000);
+    });
+
+    it('should succeed with error', (done) => {
+      const spy = sinon.spy(fx, 'log');
+
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .replyWithError('fake error');
+
+      _sendLocation(bot, msg);
+
+      setTimeout(() => {
+        spy.withArgs('123', 'L', 'x').calledOnce.should.equal(true);
+        spy.withArgs('123', 'T', '{').calledOnce.should.equal(true);
+
+        fx.log.restore();
+        done();
+      }, 1000);
+    });
+  });
+
+  describe('askLocation', () => {
+    const fx = {
+      log: (chatId, message, opts) => {
+        return { chatId, message, opts };
+      }
+    };
+    const bot = {
+      sendMessage: (chatId, message, opts) => {
+        const o = JSON.stringify(opts) || 'x';
+        fx.log(chatId, message[0], o[0]);
+      }
+    };
+    const msg = {
+      chat: {
+        id: '123'
+      },
+      'message_id': 'abc'
+    };
+
+    it('should succeed', (done) => {
+      const spy = sinon.spy(fx, 'log');
+
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, contentstops);
+
+      _askLocation(bot, msg);
+
+      setTimeout(() => {
+        spy.withArgs('123', 'T', '{').calledOnce.should.equal(true);
+
+        fx.log.restore();
+        done();
+      }, 1000);
     });
   });
 

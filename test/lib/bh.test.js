@@ -86,6 +86,20 @@ describe('bh', () => {
         .catch((err) => done(err));
     });
 
+    it('should succeed and return empty array when data is empty', (done) => {
+      nock(bhUrl2)
+        .get(page2)
+          .query(qs2)
+          .reply(200, {});
+
+      _getStopsListData()
+        .then((res) => {
+          res.length.should.equal(0);
+          done();
+        })
+        .catch((err) => done(err));
+    });
+
     it('should fail when server returns an error', (done) => {
       nock(bhUrl2)
         .get(page2)
@@ -122,15 +136,28 @@ describe('bh', () => {
   });
 
   describe('getNearbyLocations', () => {
-    const list = JSON.parse(contentstops.replace(/^\(/, '').replace(/\);$/, ''));
 
     it('should succeed', (done) => {
+      const list = JSON.parse(contentstops.replace(/^\(/, '').replace(/\);$/, ''));
       const here = {
         latitude: '50.8306925129872',
         longitude: '-0.148075984124083'
       };
-      const output = _getNearbyLocations(here, list.result);
+      const range = 100;
+      const output = _getNearbyLocations(here, list.result, range);
       Object.keys(output).length.should.equal(4);
+      done();
+    });
+
+    it('should succeed when no bus stop is in the range', (done) => {
+      const list = JSON.parse(contentstops.replace(/^\(/, '').replace(/\);$/, ''));
+      const here = {
+        latitude: '44.801485',
+        longitude: '10.327903600000013'
+      };
+      const range = 100;
+      const output = _getNearbyLocations(here, list.result, range);
+      Object.keys(output).length.should.equal(5);
       done();
     });
   });
@@ -146,8 +173,9 @@ describe('bh', () => {
         latitude: '50.8306925129872',
         longitude: '-0.148075984124083'
       };
+      const range = 100;
 
-      _getNearbyStops(here)
+      _getNearbyStops(here, range)
         .then((res) => {
           Object.keys(res).length.should.equal(4);
           done();

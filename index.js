@@ -4,6 +4,7 @@ const telegram = require('./lib/telegram');
 
 const token = config.get('telegramToken');
 const url = config.get('appUrl');
+const range = 100;
 
 
 const start = () => {
@@ -45,7 +46,7 @@ const start = () => {
   });
 
   bot.on('location', (msg) => {
-    telegram.sendLocation(bot, msg);
+    telegram.sendLocation(bot, msg, range);
   });
 };
 
