@@ -80,7 +80,7 @@ describe('bh', () => {
 
       _getStopsListData()
         .then((res) => {
-          res.result.length.should.not.equal(0);
+          res.length.should.not.equal(0);
           done();
         })
         .catch((err) => done(err));

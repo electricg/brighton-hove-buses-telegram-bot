@@ -68,15 +68,14 @@ describe('telegram', () => {
   });
 
   describe('createResponse', () => {
-    it('should succeed with only stopid', (done) => {
+    it('should succeed with only stopcode', (done) => {
       const messageId = 'abc';
-      const match = ['', stopid];
-      _createResponse(messageId, match)
+      _createResponse(messageId, stopcode)
         .then((res) => {
           const expectedOutput = {
             opts: {
               'reply_to_message_id': 'abc',
-              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"6509"},{"text":"7","callback_data":"6509 7"},{"text":"14","callback_data":"6509 14"},{"text":"14C","callback_data":"6509 14C"},{"text":"27","callback_data":"6509 27"},{"text":"55","callback_data":"6509 55"},{"text":"59","callback_data":"6509 59"},{"text":"77","callback_data":"6509 77"},{"text":"N7","callback_data":"6509 N7"},{"text":"27C","callback_data":"6509 27C"},{"text":"48E","callback_data":"6509 48E"},{"text":"37A","callback_data":"6509 37A"},{"text":"37B","callback_data":"6509 37B"},{"text":"57","callback_data":"6509 57"}]]}'
+              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
             }
           };
 
@@ -86,15 +85,14 @@ describe('telegram', () => {
         .catch((err) => done(err));
     });
 
-    it('should succeed with stopid and service', (done) => {
+    it('should succeed with stopcode and service', (done) => {
       const messageId = 'abc';
-      const match = ['', stopid, ' ' + servicename];
-      _createResponse(messageId, match)
+      _createResponse(messageId, stopcode, servicename)
         .then((res) => {
           const expectedOutput = {
             opts: {
               'reply_to_message_id': 'abc',
-              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"6509"},{"text":"7","callback_data":"6509 7"},{"text":"14","callback_data":"6509 14"},{"text":"14C","callback_data":"6509 14C"},{"text":"27","callback_data":"6509 27"},{"text":"55","callback_data":"6509 55"},{"text":"59","callback_data":"6509 59"},{"text":"77","callback_data":"6509 77"},{"text":"N7","callback_data":"6509 N7"},{"text":"27C","callback_data":"6509 27C"},{"text":"48E","callback_data":"6509 48E"},{"text":"37A","callback_data":"6509 37A"},{"text":"37B","callback_data":"6509 37B"},{"text":"57","callback_data":"6509 57"}]]}'
+              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
             }
           };
 
@@ -104,11 +102,10 @@ describe('telegram', () => {
         .catch((err) => done(err));
     });
 
-    it('should succeed with non existing stopid', (done) => {
+    it('should succeed with non existing stopcode', (done) => {
       const messageId = 'abc';
-      const match = ['', wrongStopid];
 
-      _createResponse(messageId, match)
+      _createResponse(messageId, wrongStopcode)
         .then((res) => {
           const expectedOutput = {
             message: 'Bus stop not found',
@@ -124,14 +121,13 @@ describe('telegram', () => {
     it('should succeed with a not 200 from the bus server', (done) => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
-      const match = ['', errorStopid];
 
       nock(bhUrl)
         .get('/departureboard.aspx')
           .query(_.assignIn({}, qs, { stopcode: errorStopid }))
           .reply(800, 'error');
 
-      _createResponse(messageId, match)
+      _createResponse(messageId, errorStopid)
         .then((res) => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
@@ -147,14 +143,13 @@ describe('telegram', () => {
     it('should succeed with an error from the bus server', (done) => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
-      const match = ['', errorStopid];
 
       nock(bhUrl)
         .get('/departureboard.aspx')
           .query(_.assignIn({}, qs, { stopcode: errorStopid }))
           .replyWithError('fake error');
 
-      _createResponse(messageId, match)
+      _createResponse(messageId, errorStopid)
         .then((res) => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
@@ -187,8 +182,23 @@ describe('telegram', () => {
       'message_id': 'abc'
     };
 
-    it('should succeed with results', (done) => {
-      const match = ['', stopid];
+    it('should succeed with results passing stopcode', (done) => {
+      const match = ['', stopcode];
+      const spy = sinon.spy(fx, 'log');
+
+      _sendResponse(bot, msg, match);
+
+      setTimeout(() => {
+        spy.withArgs('123', 'L', 'x').calledOnce.should.equal(true);
+        spy.withArgs('123', 'S', '{').calledOnce.should.equal(true);
+
+        fx.log.restore();
+        done();
+      }, 1000);
+    });
+
+    it('should succeed with results passing stopcode and service', (done) => {
+      const match = ['', stopcode, ' ' + servicename];
       const spy = sinon.spy(fx, 'log');
 
       _sendResponse(bot, msg, match);
@@ -203,7 +213,7 @@ describe('telegram', () => {
     });
 
     it('should succeed with no results found', (done) => {
-      const match = ['', wrongStopid];
+      const match = ['', wrongStopcode];
       const spy = sinon.spy(fx, 'log');
 
       _sendResponse(bot, msg, match);
