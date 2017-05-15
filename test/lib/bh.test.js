@@ -329,6 +329,11 @@ describe('bh', () => {
         input: content65097,
         output: {
           stopName: 'Seven Dials',
+          bearing: 'E',
+          location: {
+            latitude: 50.8309347155897,
+            longitude: -0.146568919313217
+          },
           stopCode: 'briapaw',
           lastUpdate: '11:26',
           services: ['7', '14', '14C', '27', '55', '59', '77', 'N7', '27C', '48E', '37A', '37B', '57'],
@@ -383,6 +388,11 @@ describe('bh', () => {
         input: content6509777,
         output: {
           stopName: 'Seven Dials',
+          bearing: 'E',
+          location: {
+            latitude: 50.8309347155897,
+            longitude: -0.146568919313217
+          },
           stopCode: 'briapaw',
           lastUpdate: '12:10',
           services: ['7', '14', '14C', '27', '55', '59', '77', 'N7', '27C', '48E', '37A', '37B', '57'],
