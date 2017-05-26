@@ -30,15 +30,16 @@ const start = () => {
     const msg = callbackQuery.message;
     const match = telegram.findMatches(action);
 
-    telegram.sendResponse(bot, msg, match);
+    telegram.sendResponseBusstop(bot, msg, match);
   });
 
   bot.onText(telegram.busStopRegEx, (msg, match) => {
-    telegram.sendResponse(bot, msg, match);
+    telegram.sendResponseBusstop(bot, msg, match);
   });
 
-  bot.onText(/\/help/, (msg, match) => {
+  bot.onText(/^\s*\/help\s*$/, (msg, match) => {
     console.log(msg, match);
+    bot.sendMessage(msg.chat.id, 'help', { 'reply_to_message_id': msg['message_id'] });
   });
 
   bot.onText(/\/location/, (msg) => {
