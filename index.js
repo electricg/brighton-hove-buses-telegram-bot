@@ -6,16 +6,22 @@ const token = config.get('telegramToken');
 const url = config.get('appUrl');
 const range = 100;
 
-const start = () => {
-  let options = {};
-
-  if (config.get('isProduction')) {
-    options.webHook = {
-      port: process.env.PORT
+const getOptions = (isProduction, port) => {
+  if (isProduction) {
+    return {
+      webHook: {
+        port
+      }
     };
-  } else {
-    options.polling = true;
   }
+
+  return {
+    polling: true
+  };
+};
+
+const start = () => {
+  const options = getOptions(config.get('isProduction'), process.env.PORT);
 
   const bot = new TelegramBot(token, options);
 
@@ -24,8 +30,7 @@ const start = () => {
   }
 
   bot.on('callback_query', callbackQuery => {
-    const action = callbackQuery.data;
-    const msg = callbackQuery.message;
+    const { data: action, message: msg } = callbackQuery;
     const match = telegram.findMatches(action);
 
     telegram.sendResponse(bot, msg, match);
@@ -33,6 +38,10 @@ const start = () => {
 
   bot.onText(telegram.busStopRegEx, (msg, match) => {
     telegram.sendResponse(bot, msg, match);
+  });
+
+  bot.onText(/\/test/, () => {
+    console.log('test');
   });
 
   bot.onText(/\/help/, (msg, match) => {
