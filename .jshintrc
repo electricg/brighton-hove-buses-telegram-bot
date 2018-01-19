@@ -11,6 +11,5 @@
   "quotmark": "single",
   "undef": true,
   "unused": true,
-  "esnext": true,
-  "predef": [ "-Promise" ]
+  "esnext": true
 }
