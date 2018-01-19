@@ -26,3 +26,9 @@ For a full list of available codes, go to http://m.buses.co.uk/departure_stops.a
 * better help
 * look at the commands
 * along with `XX min` show the actual expected time in the timetable
+
+## HOWTO
+
+### Local development
+
+Get the API Token from @botfather https://telegram.me/BotFather and put it into the `config.js` file.
