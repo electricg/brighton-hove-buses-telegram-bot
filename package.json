@@ -7,6 +7,7 @@
     "dev": "nodemon",
     "start": "node .",
     "lint": "eslint --ignore-path .gitignore .",
+    "mocha": "_mocha test/{**,**/*}/*.test.js",
     "covertest": "rm -rf coverage && istanbul cover _mocha test/{**,**/*}/*.test.js",
     "pretest": "npm run-script lint",
     "test": "npm run-script covertest",
