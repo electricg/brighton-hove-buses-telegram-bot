@@ -27,7 +27,6 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "geolib": "^2.0.24",
-    "lodash": "^4.17.4",
     "nconf": "^0.10.0",
     "node-telegram-bot-api": "^0.30.0",
     "request": "^2.83.0"

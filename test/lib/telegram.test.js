@@ -1,8 +1,8 @@
 /* global describe, it, beforeEach, afterEach */
 const fs = require('fs');
-const _ = require('lodash');
 const nock = require('nock');
 const rewire = require('rewire');
+const should = require('should');
 const sinon = require('sinon');
 
 const _telegram = rewire('../../lib/telegram');
@@ -42,22 +42,22 @@ describe('telegram', () => {
     if (!live) {
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: stopid }))
+          .query(Object.assign({}, qs1, { stopid: stopid }))
           .reply(200, content6509)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
+          .query(Object.assign({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
           .reply(200, content65097)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: stopcode }))
+          .query(Object.assign({}, qs1, { stopcode: stopcode }))
           .reply(200, content6509)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
+          .query(Object.assign({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
           .reply(200, content65097)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: wrongStopid }))
+          .query(Object.assign({}, qs1, { stopid: wrongStopid }))
           .reply(200, content000)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: wrongStopcode }))
+          .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
           .reply(200, contentxxx)
       ;
     }
@@ -82,7 +82,7 @@ describe('telegram', () => {
             }
           };
 
-          _.isEqual(res.opts, expectedOutput.opts).should.equal(true);
+          should.deepEqual(res.opts, expectedOutput.opts);
           done();
         })
         .catch((err) => done(err));
@@ -99,7 +99,7 @@ describe('telegram', () => {
             }
           };
 
-          _.isEqual(res.opts, expectedOutput.opts).should.equal(true);
+          should.deepEqual(res.opts, expectedOutput.opts);
           done();
         })
         .catch((err) => done(err));
@@ -115,7 +115,7 @@ describe('telegram', () => {
             opts: {}
           };
 
-          _.isEqual(res, expectedOutput).should.equal(true);
+          should.deepEqual(res, expectedOutput);
           done();
         })
         .catch((err) => done(err));
@@ -127,7 +127,7 @@ describe('telegram', () => {
 
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
+          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
           .reply(800, 'error');
 
       _createResponse(messageId, errorStopid)
@@ -137,7 +137,7 @@ describe('telegram', () => {
             opts: {}
           };
 
-          _.isEqual(res, expectedOutput).should.equal(true);
+          should.deepEqual(res, expectedOutput);
           done();
         })
         .catch((err) => done(err));
@@ -149,7 +149,7 @@ describe('telegram', () => {
 
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
+          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
           .replyWithError('fake error');
 
       _createResponse(messageId, errorStopid)
@@ -159,7 +159,7 @@ describe('telegram', () => {
             opts: {}
           };
 
-          _.isEqual(res, expectedOutput).should.equal(true);
+          should.deepEqual(res, expectedOutput);
           done();
         })
         .catch((err) => done(err));
@@ -190,7 +190,7 @@ describe('telegram', () => {
             }
           };
 
-          _.isEqual(res, expectedOutput).should.equal(true);
+          should.deepEqual(res, expectedOutput);
           done();
         })
         .catch((err) => done(err));
@@ -209,7 +209,7 @@ describe('telegram', () => {
             opts: {}
           };
 
-          _.isEqual(res, expectedOutput).should.equal(true);
+          should.deepEqual(res, expectedOutput);
           done();
         })
         .catch((err) => done(err));
@@ -287,7 +287,7 @@ describe('telegram', () => {
 
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: errorStopid }))
+          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
           .replyWithError('fake error');
 
       _sendResponse(bot, msg, match);
@@ -330,8 +330,8 @@ describe('telegram', () => {
       it('should succeed with `' + item.input + '`', (done) => {
         const output = _findMatches(item.input);
 
-        _.isEqual(output[1], item.output[1]).should.equal(true);
-        _.isEqual(output[2], item.output[2]).should.equal(true);
+        should.deepEqual(output[1], item.output[1]);
+        should.deepEqual(output[2], item.output[2]);
         done();
       });
     });

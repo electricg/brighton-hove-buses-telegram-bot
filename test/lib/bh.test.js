@@ -1,8 +1,8 @@
 /* global describe, it, beforeEach, afterEach */
 const fs = require('fs');
-const _ = require('lodash');
 const nock = require('nock');
 const rewire = require('rewire');
+const should = require('should');
 
 const _bh = rewire('../../lib/bh');
 const _getStopsListData = _bh.__get__('getStopsListData');
@@ -43,22 +43,22 @@ describe('bh', () => {
     if (!live) {
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: stopid }))
+          .query(Object.assign({}, qs1, { stopid: stopid }))
           .reply(200, content6509)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
+          .query(Object.assign({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
           .reply(200, content65097)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: stopcode }))
+          .query(Object.assign({}, qs1, { stopcode: stopcode }))
           .reply(200, content6509)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
+          .query(Object.assign({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
           .reply(200, content65097)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopid: wrongStopid }))
+          .query(Object.assign({}, qs1, { stopid: wrongStopid }))
           .reply(200, content000)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: wrongStopcode }))
+          .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
           .reply(200, contentxxx)
       ;
     }
@@ -290,7 +290,7 @@ describe('bh', () => {
     it('should fail when server returns an error', (done) => {
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
+          .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
           .replyWithError('fake error');
 
       _getStop('errorId')
@@ -307,7 +307,7 @@ describe('bh', () => {
     it('should fail when server returns something different from 200', (done) => {
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
+          .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
           .reply(400, 'error');
 
       _getStop('errorId')
@@ -337,7 +337,7 @@ describe('bh', () => {
           stopCode: 'briapaw',
           lastUpdate: '11:26',
           services: ['7', '14', '14C', '27', '55', '59', '77', 'N7', '27C', '48E', '37A', '37B', '57'],
-          times: [ 
+          times: [
             {
               service: '7',
               destination: 'Marina',
@@ -405,7 +405,7 @@ describe('bh', () => {
       it(item.desc, (done) => {
         const output = _parseStop(item.input);
 
-        _.isEqual(output, item.output).should.equal(true);
+        should.deepEqual(output, item.output);
         done();
       });
     });
@@ -417,7 +417,7 @@ describe('bh', () => {
         .then((res) => {
           res.stopName.should.equal('Seven Dials');
           res.stopCode.should.equal('briapaw');
-          _.isEqual(['7', '14', '14C', '27', '55', '59', '77', 'N7', '27C', '48E', '37A', '37B', '57'], res.services).should.equal(true);
+          should.deepEqual(['7', '14', '14C', '27', '55', '59', '77', 'N7', '27C', '48E', '37A', '37B', '57'], res.services);
 
           done();
         })
@@ -427,7 +427,7 @@ describe('bh', () => {
     it('should fail', (done) => {
       nock(bhUrl1)
         .get(page1)
-          .query(_.assignIn({}, qs1, { stopcode: 'errorId' }))
+          .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
           .reply(400, 'error');
 
       _getData('errorId')
