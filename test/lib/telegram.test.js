@@ -1,4 +1,3 @@
-/* global describe, it, beforeEach, afterEach */
 const fs = require('fs');
 const nock = require('nock');
 const rewire = require('rewire');
@@ -35,81 +34,90 @@ const wrongStopcode = 'xxx';
 
 const live = false;
 
-
 describe('telegram', () => {
-
-  beforeEach((done) => {
+  beforeEach(done => {
     if (!live) {
       nock(bhUrl1)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopid: stopid }))
-          .reply(200, content6509)
+        .query(Object.assign({}, qs1, { stopid: stopid }))
+        .reply(200, content6509)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopid: stopid, servicenamefilter: servicename }))
-          .reply(200, content65097)
+        .query(
+          Object.assign({}, qs1, {
+            stopid: stopid,
+            servicenamefilter: servicename
+          })
+        )
+        .reply(200, content65097)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: stopcode }))
-          .reply(200, content6509)
+        .query(Object.assign({}, qs1, { stopcode: stopcode }))
+        .reply(200, content6509)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: stopcode, servicenamefilter: servicename }))
-          .reply(200, content65097)
+        .query(
+          Object.assign({}, qs1, {
+            stopcode: stopcode,
+            servicenamefilter: servicename
+          })
+        )
+        .reply(200, content65097)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopid: wrongStopid }))
-          .reply(200, content000)
+        .query(Object.assign({}, qs1, { stopid: wrongStopid }))
+        .reply(200, content000)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
-          .reply(200, contentxxx)
-      ;
+        .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
+        .reply(200, contentxxx);
     }
 
     done();
   });
 
-  afterEach((done) => {
+  afterEach(done => {
     nock.cleanAll();
     done();
   });
 
   describe('createResponse', () => {
-    it('should succeed with only stopcode', (done) => {
+    it('should succeed with only stopcode', done => {
       const messageId = 'abc';
       _createResponse(messageId, stopcode)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             opts: {
-              'reply_to_message_id': 'abc',
-              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
+              reply_to_message_id: 'abc',
+              reply_markup:
+                '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
             }
           };
 
           should.deepEqual(res.opts, expectedOutput.opts);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
 
-    it('should succeed with stopcode and service', (done) => {
+    it('should succeed with stopcode and service', done => {
       const messageId = 'abc';
       _createResponse(messageId, stopcode, servicename)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             opts: {
-              'reply_to_message_id': 'abc',
-              'reply_markup': '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
+              reply_to_message_id: 'abc',
+              reply_markup:
+                '{"inline_keyboard":[[{"text":"all","callback_data":"briapaw"},{"text":"7","callback_data":"briapaw 7"},{"text":"14","callback_data":"briapaw 14"},{"text":"14C","callback_data":"briapaw 14C"},{"text":"27","callback_data":"briapaw 27"},{"text":"55","callback_data":"briapaw 55"},{"text":"59","callback_data":"briapaw 59"},{"text":"77","callback_data":"briapaw 77"},{"text":"N7","callback_data":"briapaw N7"},{"text":"27C","callback_data":"briapaw 27C"},{"text":"48E","callback_data":"briapaw 48E"},{"text":"37A","callback_data":"briapaw 37A"},{"text":"37B","callback_data":"briapaw 37B"},{"text":"57","callback_data":"briapaw 57"}]]}'
             }
           };
 
           should.deepEqual(res.opts, expectedOutput.opts);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
 
-    it('should succeed with non existing stopcode', (done) => {
+    it('should succeed with non existing stopcode', done => {
       const messageId = 'abc';
 
       _createResponse(messageId, wrongStopcode)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             message: 'Bus stop not found',
             opts: {}
@@ -118,20 +126,20 @@ describe('telegram', () => {
           should.deepEqual(res, expectedOutput);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
 
-    it('should succeed with a not 200 from the bus server', (done) => {
+    it('should succeed with a not 200 from the bus server', done => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
       nock(bhUrl1)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
-          .reply(800, 'error');
+        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+        .reply(800, 'error');
 
       _createResponse(messageId, errorStopid)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
             opts: {}
@@ -140,20 +148,20 @@ describe('telegram', () => {
           should.deepEqual(res, expectedOutput);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
 
-    it('should succeed with an error from the bus server', (done) => {
+    it('should succeed with an error from the bus server', done => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
       nock(bhUrl1)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
-          .replyWithError('fake error');
+        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+        .replyWithError('fake error');
 
       _createResponse(messageId, errorStopid)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
             opts: {}
@@ -162,12 +170,12 @@ describe('telegram', () => {
           should.deepEqual(res, expectedOutput);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
   });
 
   describe('createResponseLocation', () => {
-    it('should succeed', (done) => {
+    it('should succeed', done => {
       const messageId = 'abc';
       const here = {
         latitude: '50.8306925129872',
@@ -177,33 +185,34 @@ describe('telegram', () => {
 
       nock(bhUrl2)
         .get(page2)
-          .query(qs2)
-          .reply(200, contentstops);
+        .query(qs2)
+        .reply(200, contentstops);
 
       _createResponseLocation(messageId, here, range)
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             message: 'Bus stops found:\n',
             opts: {
-              'reply_to_message_id': 'abc',
-              'reply_markup': '{"inline_keyboard":[[{"text":"Seven Dials W (briagmj)","callback_data":"briagmj"}],[{"text":"Seven Dials SE (brijdag)","callback_data":"brijdag"}],[{"text":"Seven Dials NW (brimdwd)","callback_data":"brimdwd"}],[{"text":"Seven Dials SW (briajwj)","callback_data":"briajwj"}]]}'
+              reply_to_message_id: 'abc',
+              reply_markup:
+                '{"inline_keyboard":[[{"text":"Seven Dials W (briagmj)","callback_data":"briagmj"}],[{"text":"Seven Dials SE (brijdag)","callback_data":"brijdag"}],[{"text":"Seven Dials NW (brimdwd)","callback_data":"brimdwd"}],[{"text":"Seven Dials SW (briajwj)","callback_data":"briajwj"}]]}'
             }
           };
 
           should.deepEqual(res, expectedOutput);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
 
-    it('should succeed with a not 200 from the bus server', (done) => {
+    it('should succeed with a not 200 from the bus server', done => {
       nock(bhUrl2)
         .get(page2)
-          .query(qs2)
-          .reply(800, 'error');
+        .query(qs2)
+        .reply(800, 'error');
 
       _createResponseLocation()
-        .then((res) => {
+        .then(res => {
           const expectedOutput = {
             message: 'There was a problem contacting the server',
             opts: {}
@@ -212,7 +221,7 @@ describe('telegram', () => {
           should.deepEqual(res, expectedOutput);
           done();
         })
-        .catch((err) => done(err));
+        .catch(err => done(err));
     });
   });
 
@@ -232,10 +241,10 @@ describe('telegram', () => {
       chat: {
         id: '123'
       },
-      'message_id': 'abc'
+      message_id: 'abc'
     };
 
-    it('should succeed with results passing stopcode', (done) => {
+    it('should succeed with results passing stopcode', done => {
       const match = ['', stopcode];
       const spy = sinon.spy(fx, 'log');
 
@@ -250,8 +259,8 @@ describe('telegram', () => {
       }, 1000);
     });
 
-    it('should succeed with results passing stopcode and service', (done) => {
-      const match = ['', stopcode, ' ' + servicename];
+    it('should succeed with results passing stopcode and service', done => {
+      const match = ['', stopcode, ` ${servicename}`];
       const spy = sinon.spy(fx, 'log');
 
       _sendResponse(bot, msg, match);
@@ -265,7 +274,7 @@ describe('telegram', () => {
       }, 1000);
     });
 
-    it('should succeed with no results found', (done) => {
+    it('should succeed with no results found', done => {
       const match = ['', wrongStopcode];
       const spy = sinon.spy(fx, 'log');
 
@@ -280,15 +289,15 @@ describe('telegram', () => {
       }, 1000);
     });
 
-    it('should succeed with error', (done) => {
+    it('should succeed with error', done => {
       const errorStopid = 'errorId';
       const match = ['', errorStopid];
       const spy = sinon.spy(fx, 'log');
 
       nock(bhUrl1)
         .get(page1)
-          .query(Object.assign({}, qs1, { stopcode: errorStopid }))
-          .replyWithError('fake error');
+        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+        .replyWithError('fake error');
 
       _sendResponse(bot, msg, match);
 
@@ -326,8 +335,8 @@ describe('telegram', () => {
       }
     ];
 
-    o.forEach((item) => {
-      it('should succeed with `' + item.input + '`', (done) => {
+    o.forEach(item => {
+      it(`should succeed with \`${item.input}\``, done => {
         const output = _findMatches(item.input);
 
         should.deepEqual(output[1], item.output[1]);
@@ -353,20 +362,20 @@ describe('telegram', () => {
       chat: {
         id: '123'
       },
-      'message_id': 'abc',
+      message_id: 'abc',
       location: {
         latitude: '50.8306925129872',
         longitude: '-0.148075984124083'
       }
     };
 
-    it('should succeed', (done) => {
+    it('should succeed', done => {
       const spy = sinon.spy(fx, 'log');
 
       nock(bhUrl2)
         .get(page2)
-          .query(qs2)
-          .reply(200, contentstops);
+        .query(qs2)
+        .reply(200, contentstops);
 
       _sendLocation(bot, msg);
 
@@ -379,13 +388,13 @@ describe('telegram', () => {
       }, 1000);
     });
 
-    it('should succeed with error', (done) => {
+    it('should succeed with error', done => {
       const spy = sinon.spy(fx, 'log');
 
       nock(bhUrl2)
         .get(page2)
-          .query(qs2)
-          .replyWithError('fake error');
+        .query(qs2)
+        .replyWithError('fake error');
 
       _sendLocation(bot, msg);
 
@@ -415,16 +424,16 @@ describe('telegram', () => {
       chat: {
         id: '123'
       },
-      'message_id': 'abc'
+      message_id: 'abc'
     };
 
-    it('should succeed', (done) => {
+    it('should succeed', done => {
       const spy = sinon.spy(fx, 'log');
 
       nock(bhUrl2)
         .get(page2)
-          .query(qs2)
-          .reply(200, contentstops);
+        .query(qs2)
+        .reply(200, contentstops);
 
       _askLocation(bot, msg);
 
@@ -436,5 +445,4 @@ describe('telegram', () => {
       }, 1000);
     });
   });
-
 });
