@@ -4,19 +4,19 @@ const rewire = require('rewire');
 const should = require('should');
 
 const _bh = rewire('../../lib/bh');
-const _getStopsListData = _bh.__get__('getStopsListData');
-const _getStop = _bh.__get__('getStop');
+const _fetchStopsListData = _bh.__get__('fetchStopsListData');
+const _fetchStopData = _bh.__get__('fetchStopData');
 const _parseStop = _bh.__get__('parseStop');
 const _getData = _bh.__get__('getData');
 const _getNearbyLocations = _bh.__get__('getNearbyLocations');
 const _getNearbyStops = _bh.__get__('getNearbyStops');
 
-const bhUrl1 = _bh.__get__('bhUrl1');
-const bhUrl2 = _bh.__get__('bhUrl2');
-const qs1 = _bh.__get__('qs1');
-const qs2 = _bh.__get__('qs2');
-const page1 = _bh.__get__('page1');
-const page2 = _bh.__get__('page2');
+const bhSingleStopDataUrl = _bh.__get__('bhSingleStopDataUrl');
+const bhStopsListDataUrl = _bh.__get__('bhStopsListDataUrl');
+const bhSingleStopDataQuery = _bh.__get__('bhSingleStopDataQuery');
+const bhStopsListDataQuery = _bh.__get__('bhStopsListDataQuery');
+const bhSingleStopDataPage = _bh.__get__('bhSingleStopDataPage');
+const bhStopsListDataPage = _bh.__get__('bhStopsListDataPage');
 
 const check6509 = fs.readFileSync('./test/data/6509.txt', 'utf8');
 const check65097 = fs.readFileSync('./test/data/6509-7.txt', 'utf8');
@@ -38,34 +38,38 @@ const live = false;
 describe('bh', () => {
   beforeEach(done => {
     if (!live) {
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopid: stopid }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(Object.assign({}, bhSingleStopDataQuery, { stopid: stopid }))
         .reply(200, content6509)
-        .get(page1)
+        .get(bhSingleStopDataPage)
         .query(
-          Object.assign({}, qs1, {
+          Object.assign({}, bhSingleStopDataQuery, {
             stopid: stopid,
             servicenamefilter: servicename
           })
         )
         .reply(200, content65097)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: stopcode }))
+        .get(bhSingleStopDataPage)
+        .query(Object.assign({}, bhSingleStopDataQuery, { stopcode: stopcode }))
         .reply(200, content6509)
-        .get(page1)
+        .get(bhSingleStopDataPage)
         .query(
-          Object.assign({}, qs1, {
+          Object.assign({}, bhSingleStopDataQuery, {
             stopcode: stopcode,
             servicenamefilter: servicename
           })
         )
         .reply(200, content65097)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopid: wrongStopid }))
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopid: wrongStopid })
+        )
         .reply(200, content000)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: wrongStopcode })
+        )
         .reply(200, contentxxx);
     }
 
@@ -77,14 +81,14 @@ describe('bh', () => {
     done();
   });
 
-  describe('getStopsListData', () => {
+  describe('fetchStopsListData', () => {
     it('should succeed', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, contentstops);
 
-      _getStopsListData()
+      _fetchStopsListData()
         .then(res => {
           res.length.should.not.equal(0);
           done();
@@ -93,12 +97,12 @@ describe('bh', () => {
     });
 
     it('should succeed and return empty array when data is empty', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, {});
 
-      _getStopsListData()
+      _fetchStopsListData()
         .then(res => {
           res.length.should.equal(0);
           done();
@@ -107,12 +111,12 @@ describe('bh', () => {
     });
 
     it('should fail when server returns an error', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .replyWithError('fake error');
 
-      _getStopsListData()
+      _fetchStopsListData()
         .then(() => {
           done('There should be an error');
         })
@@ -124,12 +128,12 @@ describe('bh', () => {
     });
 
     it('should fail when server returns something different from 200', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(400, 'error');
 
-      _getStopsListData('errorId')
+      _fetchStopsListData('errorId')
         .then(() => {
           done('There should be an error');
         })
@@ -173,9 +177,9 @@ describe('bh', () => {
 
   describe('getNearbyStops', () => {
     it('should succeed', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, contentstops);
 
       const here = {
@@ -193,9 +197,9 @@ describe('bh', () => {
     });
 
     it('should fail', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .replyWithError('fake error');
 
       const here = {
@@ -215,11 +219,11 @@ describe('bh', () => {
     });
   });
 
-  describe('getStop', () => {
+  describe('fetchStopData', () => {
     it('should succeed passing only stop id', done => {
       const checks = check6509.split('\n==========\n');
 
-      _getStop(stopid)
+      _fetchStopData(stopid)
         .then(res => {
           checks.forEach(check => {
             res.indexOf(check).should.not.equal(-1);
@@ -233,7 +237,7 @@ describe('bh', () => {
     it('should succeed passing stop id and service', done => {
       const checks = check65097.split('\n==========\n');
 
-      _getStop(stopid, servicename)
+      _fetchStopData(stopid, servicename)
         .then(res => {
           checks.forEach(check => {
             res.indexOf(check).should.not.equal(-1);
@@ -247,7 +251,7 @@ describe('bh', () => {
     it('should succeed passing only stop code', done => {
       const checks = check6509.split('\n==========\n');
 
-      _getStop(stopcode)
+      _fetchStopData(stopcode)
         .then(res => {
           checks.forEach(check => {
             res.indexOf(check).should.not.equal(-1);
@@ -261,7 +265,7 @@ describe('bh', () => {
     it('should succeed passing stop code and service', done => {
       const checks = check65097.split('\n==========\n');
 
-      _getStop(stopcode, servicename)
+      _fetchStopData(stopcode, servicename)
         .then(res => {
           checks.forEach(check => {
             res.indexOf(check).should.not.equal(-1);
@@ -273,7 +277,7 @@ describe('bh', () => {
     });
 
     it('should fail passing non existing stop id', done => {
-      _getStop(wrongStopid)
+      _fetchStopData(wrongStopid)
         .then(() => {
           done('There should be an error');
         })
@@ -285,7 +289,7 @@ describe('bh', () => {
     });
 
     it('should fail passing non existing stop code', done => {
-      _getStop(wrongStopcode)
+      _fetchStopData(wrongStopcode)
         .then(() => {
           done('There should be an error');
         })
@@ -297,12 +301,14 @@ describe('bh', () => {
     });
 
     it('should fail when server returns an error', done => {
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
+        )
         .replyWithError('fake error');
 
-      _getStop('errorId')
+      _fetchStopData('errorId')
         .then(() => {
           done('There should be an error');
         })
@@ -314,12 +320,14 @@ describe('bh', () => {
     });
 
     it('should fail when server returns something different from 200', done => {
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
+        )
         .reply(400, 'error');
 
-      _getStop('errorId')
+      _fetchStopData('errorId')
         .then(() => {
           done('There should be an error');
         })
@@ -479,9 +487,11 @@ describe('bh', () => {
     });
 
     it('should fail', done => {
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: 'errorId' }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
+        )
         .reply(400, 'error');
 
       _getData('errorId')

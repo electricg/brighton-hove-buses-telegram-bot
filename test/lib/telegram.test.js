@@ -13,12 +13,12 @@ const _sendLocation = _telegram.__get__('sendLocation');
 const _askLocation = _telegram.__get__('askLocation');
 
 const _bh = rewire('../../lib/bh');
-const bhUrl1 = _bh.__get__('bhUrl1');
-const bhUrl2 = _bh.__get__('bhUrl2');
-const qs1 = _bh.__get__('qs1');
-const qs2 = _bh.__get__('qs2');
-const page1 = _bh.__get__('page1');
-const page2 = _bh.__get__('page2');
+const bhSingleStopDataUrl = _bh.__get__('bhSingleStopDataUrl');
+const bhStopsListDataUrl = _bh.__get__('bhStopsListDataUrl');
+const bhSingleStopDataQuery = _bh.__get__('bhSingleStopDataQuery');
+const bhStopsListDataQuery = _bh.__get__('bhStopsListDataQuery');
+const bhSingleStopDataPage = _bh.__get__('bhSingleStopDataPage');
+const bhStopsListDataPage = _bh.__get__('bhStopsListDataPage');
 
 const content6509 = fs.readFileSync('./test/data/6509.html', 'utf8');
 const content65097 = fs.readFileSync('./test/data/6509-7.html', 'utf8');
@@ -37,34 +37,38 @@ const live = false;
 describe('telegram', () => {
   beforeEach(done => {
     if (!live) {
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopid: stopid }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(Object.assign({}, bhSingleStopDataQuery, { stopid: stopid }))
         .reply(200, content6509)
-        .get(page1)
+        .get(bhSingleStopDataPage)
         .query(
-          Object.assign({}, qs1, {
+          Object.assign({}, bhSingleStopDataQuery, {
             stopid: stopid,
             servicenamefilter: servicename
           })
         )
         .reply(200, content65097)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: stopcode }))
+        .get(bhSingleStopDataPage)
+        .query(Object.assign({}, bhSingleStopDataQuery, { stopcode: stopcode }))
         .reply(200, content6509)
-        .get(page1)
+        .get(bhSingleStopDataPage)
         .query(
-          Object.assign({}, qs1, {
+          Object.assign({}, bhSingleStopDataQuery, {
             stopcode: stopcode,
             servicenamefilter: servicename
           })
         )
         .reply(200, content65097)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopid: wrongStopid }))
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopid: wrongStopid })
+        )
         .reply(200, content000)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: wrongStopcode }))
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: wrongStopcode })
+        )
         .reply(200, contentxxx);
     }
 
@@ -133,9 +137,11 @@ describe('telegram', () => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: errorStopid })
+        )
         .reply(800, 'error');
 
       _createResponse(messageId, errorStopid)
@@ -155,9 +161,11 @@ describe('telegram', () => {
       const messageId = 'abc';
       const errorStopid = 'errorId';
 
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: errorStopid })
+        )
         .replyWithError('fake error');
 
       _createResponse(messageId, errorStopid)
@@ -183,9 +191,9 @@ describe('telegram', () => {
       };
       const range = 100;
 
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, contentstops);
 
       _createResponseLocation(messageId, here, range)
@@ -206,9 +214,9 @@ describe('telegram', () => {
     });
 
     it('should succeed with a not 200 from the bus server', done => {
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(800, 'error');
 
       _createResponseLocation()
@@ -294,9 +302,11 @@ describe('telegram', () => {
       const match = ['', errorStopid];
       const spy = sinon.spy(fx, 'log');
 
-      nock(bhUrl1)
-        .get(page1)
-        .query(Object.assign({}, qs1, { stopcode: errorStopid }))
+      nock(bhSingleStopDataUrl)
+        .get(bhSingleStopDataPage)
+        .query(
+          Object.assign({}, bhSingleStopDataQuery, { stopcode: errorStopid })
+        )
         .replyWithError('fake error');
 
       _sendResponse(bot, msg, match);
@@ -372,9 +382,9 @@ describe('telegram', () => {
     it('should succeed', done => {
       const spy = sinon.spy(fx, 'log');
 
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, contentstops);
 
       _sendLocation(bot, msg);
@@ -391,9 +401,9 @@ describe('telegram', () => {
     it('should succeed with error', done => {
       const spy = sinon.spy(fx, 'log');
 
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .replyWithError('fake error');
 
       _sendLocation(bot, msg);
@@ -430,9 +440,9 @@ describe('telegram', () => {
     it('should succeed', done => {
       const spy = sinon.spy(fx, 'log');
 
-      nock(bhUrl2)
-        .get(page2)
-        .query(qs2)
+      nock(bhStopsListDataUrl)
+        .get(bhStopsListDataPage)
+        .query(bhStopsListDataQuery)
         .reply(200, contentstops);
 
       _askLocation(bot, msg);
