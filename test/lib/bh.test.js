@@ -36,473 +36,489 @@ const wrongStopcode = 'xxx';
 const live = false;
 
 describe('bh', () => {
-  beforeEach(done => {
-    if (!live) {
-      nock(bhSingleStopDataUrl)
-        .get(bhSingleStopDataPage)
-        .query(Object.assign({}, bhSingleStopDataQuery, { stopid: stopid }))
-        .reply(200, content6509)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, {
-            stopid: stopid,
-            servicenamefilter: servicename
-          })
-        )
-        .reply(200, content65097)
-        .get(bhSingleStopDataPage)
-        .query(Object.assign({}, bhSingleStopDataQuery, { stopcode: stopcode }))
-        .reply(200, content6509)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, {
-            stopcode: stopcode,
-            servicenamefilter: servicename
-          })
-        )
-        .reply(200, content65097)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, { stopid: wrongStopid })
-        )
-        .reply(200, content000)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, { stopcode: wrongStopcode })
-        )
-        .reply(200, contentxxx);
-    }
-
-    done();
-  });
-
-  afterEach(done => {
-    nock.cleanAll();
-    done();
-  });
-
-  describe('fetchStopsListData', () => {
-    it('should succeed', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .reply(200, contentstops);
-
-      _fetchStopsListData()
-        .then(res => {
-          res.length.should.not.equal(0);
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should succeed and return empty array when data is empty', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .reply(200, {});
-
-      _fetchStopsListData()
-        .then(res => {
-          res.length.should.equal(0);
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should fail when server returns an error', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .replyWithError('fake error');
-
-      _fetchStopsListData()
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(503);
-          err.body.should.equal('fake error');
-          done();
-        });
-    });
-
-    it('should fail when server returns something different from 200', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .reply(400, 'error');
-
-      _fetchStopsListData('errorId')
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(400);
-          err.body.should.equal('error');
-          done();
-        });
-    });
-  });
-
-  describe('getNearbyLocations', () => {
-    it('should succeed', done => {
-      const list = JSON.parse(
-        contentstops.replace(/^\(/, '').replace(/\);$/, '')
-      );
-      const here = {
-        latitude: '50.8306925129872',
-        longitude: '-0.148075984124083'
-      };
-      const range = 100;
-      const output = _getNearbyLocations(here, list.result, range);
-      Object.keys(output).length.should.equal(4);
-      done();
-    });
-
-    it('should succeed when no bus stop is in the range', done => {
-      const list = JSON.parse(
-        contentstops.replace(/^\(/, '').replace(/\);$/, '')
-      );
-      const here = {
-        latitude: '44.801485',
-        longitude: '10.327903600000013'
-      };
-      const range = 100;
-      const output = _getNearbyLocations(here, list.result, range);
-      Object.keys(output).length.should.equal(5);
-      done();
-    });
-  });
-
-  describe('getNearbyStops', () => {
-    it('should succeed', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .reply(200, contentstops);
-
-      const here = {
-        latitude: '50.8306925129872',
-        longitude: '-0.148075984124083'
-      };
-      const range = 100;
-
-      _getNearbyStops(here, range)
-        .then(res => {
-          Object.keys(res).length.should.equal(4);
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should fail', done => {
-      nock(bhStopsListDataUrl)
-        .get(bhStopsListDataPage)
-        .query(bhStopsListDataQuery)
-        .replyWithError('fake error');
-
-      const here = {
-        latitude: '50.8306925129872',
-        longitude: '-0.148075984124083'
-      };
-
-      _getNearbyStops(here)
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(503);
-          err.body.should.equal('fake error');
-          done();
-        });
-    });
-  });
-
-  describe('fetchStopData', () => {
-    it('should succeed passing only stop id', done => {
-      const checks = check6509.split('\n==========\n');
-
-      _fetchStopData(stopid)
-        .then(res => {
-          checks.forEach(check => {
-            res.indexOf(check).should.not.equal(-1);
-          });
-
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should succeed passing stop id and service', done => {
-      const checks = check65097.split('\n==========\n');
-
-      _fetchStopData(stopid, servicename)
-        .then(res => {
-          checks.forEach(check => {
-            res.indexOf(check).should.not.equal(-1);
-          });
-
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should succeed passing only stop code', done => {
-      const checks = check6509.split('\n==========\n');
-
-      _fetchStopData(stopcode)
-        .then(res => {
-          checks.forEach(check => {
-            res.indexOf(check).should.not.equal(-1);
-          });
-
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should succeed passing stop code and service', done => {
-      const checks = check65097.split('\n==========\n');
-
-      _fetchStopData(stopcode, servicename)
-        .then(res => {
-          checks.forEach(check => {
-            res.indexOf(check).should.not.equal(-1);
-          });
-
-          done();
-        })
-        .catch(err => done(err));
-    });
-
-    it('should fail passing non existing stop id', done => {
-      _fetchStopData(wrongStopid)
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(404);
-          err.body.should.equal('no matching stop found');
-          done();
-        });
-    });
-
-    it('should fail passing non existing stop code', done => {
-      _fetchStopData(wrongStopcode)
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(404);
-          err.body.should.equal('no matching stop found');
-          done();
-        });
-    });
-
-    it('should fail when server returns an error', done => {
-      nock(bhSingleStopDataUrl)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
-        )
-        .replyWithError('fake error');
-
-      _fetchStopData('errorId')
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(503);
-          err.body.should.equal('fake error');
-          done();
-        });
-    });
-
-    it('should fail when server returns something different from 200', done => {
-      nock(bhSingleStopDataUrl)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
-        )
-        .reply(400, 'error');
-
-      _fetchStopData('errorId')
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(400);
-          err.body.should.equal('error');
-          done();
-        });
-    });
-  });
-
-  describe('parseStop', () => {
-    const o = [
-      {
-        desc: 'should succeed when there is data',
-        input: content65097,
-        output: {
-          stopName: 'Seven Dials',
-          bearing: 'E',
-          location: {
-            latitude: 50.8309347155897,
-            longitude: -0.146568919313217
-          },
-          stopCode: 'briapaw',
-          lastUpdate: '11:26',
-          services: [
-            '7',
-            '14',
-            '14C',
-            '27',
-            '55',
-            '59',
-            '77',
-            'N7',
-            '27C',
-            '48E',
-            '37A',
-            '37B',
-            '57'
-          ],
-          times: [
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '4 mins',
-              time: '13/05/2017 11:31:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '8 mins',
-              time: '13/05/2017 11:35:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '11:42',
-              time: '13/05/2017 11:42:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '22 mins',
-              time: '13/05/2017 11:49:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '28 mins',
-              time: '13/05/2017 11:55:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '35 mins',
-              time: '13/05/2017 12:02:00'
-            },
-            {
-              service: '7',
-              destination: 'Marina',
-              timeLabel: '12:09',
-              time: '13/05/2017 12:09:00'
-            }
-          ]
+    beforeEach(done => {
+        if (!live) {
+            nock(bhSingleStopDataUrl)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, { stopid: stopid })
+                )
+                .reply(200, content6509)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopid: stopid,
+                        servicenamefilter: servicename
+                    })
+                )
+                .reply(200, content65097)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: stopcode
+                    })
+                )
+                .reply(200, content6509)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: stopcode,
+                        servicenamefilter: servicename
+                    })
+                )
+                .reply(200, content65097)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopid: wrongStopid
+                    })
+                )
+                .reply(200, content000)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: wrongStopcode
+                    })
+                )
+                .reply(200, contentxxx);
         }
-      },
-      {
-        desc: 'should succeed when there is no data',
-        input: content6509777,
-        output: {
-          stopName: 'Seven Dials',
-          bearing: 'E',
-          location: {
-            latitude: 50.8309347155897,
-            longitude: -0.146568919313217
-          },
-          stopCode: 'briapaw',
-          lastUpdate: '12:10',
-          services: [
-            '7',
-            '14',
-            '14C',
-            '27',
-            '55',
-            '59',
-            '77',
-            'N7',
-            '27C',
-            '48E',
-            '37A',
-            '37B',
-            '57'
-          ],
-          times: []
-        }
-      }
-    ];
 
-    o.forEach(item => {
-      it(item.desc, done => {
-        const output = _parseStop(item.input);
-
-        should.deepEqual(output, item.output);
         done();
-      });
-    });
-  });
-
-  describe('getData', () => {
-    it('should succeed', done => {
-      _getData(stopid)
-        .then(res => {
-          res.stopName.should.equal('Seven Dials');
-          res.stopCode.should.equal('briapaw');
-          should.deepEqual(
-            [
-              '7',
-              '14',
-              '14C',
-              '27',
-              '55',
-              '59',
-              '77',
-              'N7',
-              '27C',
-              '48E',
-              '37A',
-              '37B',
-              '57'
-            ],
-            res.services
-          );
-
-          done();
-        })
-        .catch(err => done(err));
     });
 
-    it('should fail', done => {
-      nock(bhSingleStopDataUrl)
-        .get(bhSingleStopDataPage)
-        .query(
-          Object.assign({}, bhSingleStopDataQuery, { stopcode: 'errorId' })
-        )
-        .reply(400, 'error');
+    afterEach(done => {
+        nock.cleanAll();
+        done();
+    });
 
-      _getData('errorId')
-        .then(() => {
-          done('There should be an error');
-        })
-        .catch(err => {
-          err.statusCode.should.equal(400);
-          err.body.should.equal('error');
-          done();
+    describe('fetchStopsListData', () => {
+        it('should succeed', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .reply(200, contentstops);
+
+            _fetchStopsListData()
+                .then(res => {
+                    res.length.should.not.equal(0);
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should succeed and return empty array when data is empty', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .reply(200, {});
+
+            _fetchStopsListData()
+                .then(res => {
+                    res.length.should.equal(0);
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should fail when server returns an error', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .replyWithError('fake error');
+
+            _fetchStopsListData()
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(503);
+                    err.body.should.equal('fake error');
+                    done();
+                });
+        });
+
+        it('should fail when server returns something different from 200', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .reply(400, 'error');
+
+            _fetchStopsListData('errorId')
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(400);
+                    err.body.should.equal('error');
+                    done();
+                });
         });
     });
-  });
+
+    describe('getNearbyLocations', () => {
+        it('should succeed', done => {
+            const list = JSON.parse(
+                contentstops.replace(/^\(/, '').replace(/\);$/, '')
+            );
+            const here = {
+                latitude: '50.8306925129872',
+                longitude: '-0.148075984124083'
+            };
+            const range = 100;
+            const output = _getNearbyLocations(here, list.result, range);
+            Object.keys(output).length.should.equal(4);
+            done();
+        });
+
+        it('should succeed when no bus stop is in the range', done => {
+            const list = JSON.parse(
+                contentstops.replace(/^\(/, '').replace(/\);$/, '')
+            );
+            const here = {
+                latitude: '44.801485',
+                longitude: '10.327903600000013'
+            };
+            const range = 100;
+            const output = _getNearbyLocations(here, list.result, range);
+            Object.keys(output).length.should.equal(5);
+            done();
+        });
+    });
+
+    describe('getNearbyStops', () => {
+        it('should succeed', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .reply(200, contentstops);
+
+            const here = {
+                latitude: '50.8306925129872',
+                longitude: '-0.148075984124083'
+            };
+            const range = 100;
+
+            _getNearbyStops(here, range)
+                .then(res => {
+                    Object.keys(res).length.should.equal(4);
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should fail', done => {
+            nock(bhStopsListDataUrl)
+                .get(bhStopsListDataPage)
+                .query(bhStopsListDataQuery)
+                .replyWithError('fake error');
+
+            const here = {
+                latitude: '50.8306925129872',
+                longitude: '-0.148075984124083'
+            };
+
+            _getNearbyStops(here)
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(503);
+                    err.body.should.equal('fake error');
+                    done();
+                });
+        });
+    });
+
+    describe('fetchStopData', () => {
+        it('should succeed passing only stop id', done => {
+            const checks = check6509.split('\n==========\n');
+
+            _fetchStopData(stopid)
+                .then(res => {
+                    checks.forEach(check => {
+                        res.indexOf(check).should.not.equal(-1);
+                    });
+
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should succeed passing stop id and service', done => {
+            const checks = check65097.split('\n==========\n');
+
+            _fetchStopData(stopid, servicename)
+                .then(res => {
+                    checks.forEach(check => {
+                        res.indexOf(check).should.not.equal(-1);
+                    });
+
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should succeed passing only stop code', done => {
+            const checks = check6509.split('\n==========\n');
+
+            _fetchStopData(stopcode)
+                .then(res => {
+                    checks.forEach(check => {
+                        res.indexOf(check).should.not.equal(-1);
+                    });
+
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should succeed passing stop code and service', done => {
+            const checks = check65097.split('\n==========\n');
+
+            _fetchStopData(stopcode, servicename)
+                .then(res => {
+                    checks.forEach(check => {
+                        res.indexOf(check).should.not.equal(-1);
+                    });
+
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should fail passing non existing stop id', done => {
+            _fetchStopData(wrongStopid)
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(404);
+                    err.body.should.equal('no matching stop found');
+                    done();
+                });
+        });
+
+        it('should fail passing non existing stop code', done => {
+            _fetchStopData(wrongStopcode)
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(404);
+                    err.body.should.equal('no matching stop found');
+                    done();
+                });
+        });
+
+        it('should fail when server returns an error', done => {
+            nock(bhSingleStopDataUrl)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: 'errorId'
+                    })
+                )
+                .replyWithError('fake error');
+
+            _fetchStopData('errorId')
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(503);
+                    err.body.should.equal('fake error');
+                    done();
+                });
+        });
+
+        it('should fail when server returns something different from 200', done => {
+            nock(bhSingleStopDataUrl)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: 'errorId'
+                    })
+                )
+                .reply(400, 'error');
+
+            _fetchStopData('errorId')
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(400);
+                    err.body.should.equal('error');
+                    done();
+                });
+        });
+    });
+
+    describe('parseStop', () => {
+        const o = [
+            {
+                desc: 'should succeed when there is data',
+                input: content65097,
+                output: {
+                    stopName: 'Seven Dials',
+                    bearing: 'E',
+                    location: {
+                        latitude: 50.8309347155897,
+                        longitude: -0.146568919313217
+                    },
+                    stopCode: 'briapaw',
+                    lastUpdate: '11:26',
+                    services: [
+                        '7',
+                        '14',
+                        '14C',
+                        '27',
+                        '55',
+                        '59',
+                        '77',
+                        'N7',
+                        '27C',
+                        '48E',
+                        '37A',
+                        '37B',
+                        '57'
+                    ],
+                    times: [
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '4 mins',
+                            time: '13/05/2017 11:31:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '8 mins',
+                            time: '13/05/2017 11:35:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '11:42',
+                            time: '13/05/2017 11:42:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '22 mins',
+                            time: '13/05/2017 11:49:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '28 mins',
+                            time: '13/05/2017 11:55:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '35 mins',
+                            time: '13/05/2017 12:02:00'
+                        },
+                        {
+                            service: '7',
+                            destination: 'Marina',
+                            timeLabel: '12:09',
+                            time: '13/05/2017 12:09:00'
+                        }
+                    ]
+                }
+            },
+            {
+                desc: 'should succeed when there is no data',
+                input: content6509777,
+                output: {
+                    stopName: 'Seven Dials',
+                    bearing: 'E',
+                    location: {
+                        latitude: 50.8309347155897,
+                        longitude: -0.146568919313217
+                    },
+                    stopCode: 'briapaw',
+                    lastUpdate: '12:10',
+                    services: [
+                        '7',
+                        '14',
+                        '14C',
+                        '27',
+                        '55',
+                        '59',
+                        '77',
+                        'N7',
+                        '27C',
+                        '48E',
+                        '37A',
+                        '37B',
+                        '57'
+                    ],
+                    times: []
+                }
+            }
+        ];
+
+        o.forEach(item => {
+            it(item.desc, done => {
+                const output = _parseStop(item.input);
+
+                should.deepEqual(output, item.output);
+                done();
+            });
+        });
+    });
+
+    describe('getData', () => {
+        it('should succeed', done => {
+            _getData(stopid)
+                .then(res => {
+                    res.stopName.should.equal('Seven Dials');
+                    res.stopCode.should.equal('briapaw');
+                    should.deepEqual(
+                        [
+                            '7',
+                            '14',
+                            '14C',
+                            '27',
+                            '55',
+                            '59',
+                            '77',
+                            'N7',
+                            '27C',
+                            '48E',
+                            '37A',
+                            '37B',
+                            '57'
+                        ],
+                        res.services
+                    );
+
+                    done();
+                })
+                .catch(err => done(err));
+        });
+
+        it('should fail', done => {
+            nock(bhSingleStopDataUrl)
+                .get(bhSingleStopDataPage)
+                .query(
+                    Object.assign({}, bhSingleStopDataQuery, {
+                        stopcode: 'errorId'
+                    })
+                )
+                .reply(400, 'error');
+
+            _getData('errorId')
+                .then(() => {
+                    done('There should be an error');
+                })
+                .catch(err => {
+                    err.statusCode.should.equal(400);
+                    err.body.should.equal('error');
+                    done();
+                });
+        });
+    });
 });
