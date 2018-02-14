@@ -4,6 +4,7 @@ const rewire = require('rewire');
 const should = require('should');
 
 const _bh = rewire('../../lib/bh');
+const _parseStopsListData = _bh.__get__('parseStopsListData');
 const _fetchStopsListData = _bh.__get__('fetchStopsListData');
 const _fetchStopData = _bh.__get__('fetchStopData');
 const _parseStop = _bh.__get__('parseStop');
@@ -91,6 +92,102 @@ describe('bh', () => {
         done();
     });
 
+    describe('parseStopsListData', () => {
+        const o = [
+            {
+                desc: 'should return empty array when data is a number',
+                input: 9,
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is a boolean true',
+                input: true,
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is a boolean false',
+                input: false,
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is null',
+                input: null,
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is undefined',
+                input: undefined,
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is an empty object',
+                input: {},
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is an empty array',
+                input: [],
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is a string',
+                input: 'x',
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is an empty string',
+                input: '',
+                output: []
+            },
+            {
+                desc: 'should return empty array when data is empty result',
+                input: '({"result":[]});',
+                output: []
+            },
+            {
+                desc: 'should return one element',
+                input: '({"result":[1]});',
+                output: [1]
+            },
+            {
+                desc: 'should return one element when end semicolon is missing',
+                input: '({"result":[1]})',
+                output: [1]
+            },
+            {
+                desc: 'should return one element when multiple end semicolons',
+                input: '({"result":[1]});;',
+                output: [1]
+            },
+            {
+                desc: 'should return one element when data is json not jsonp',
+                input: '{"result":[1]}',
+                output: [1]
+            },
+            {
+                desc:
+                    'should return empty array when data in jsonp not an array',
+                input: '{"result":1}',
+                output: []
+            },
+            {
+                desc:
+                    'should return empty array when data in jsonp has no result field',
+                input: '{"fake":[1]}',
+                output: []
+            }
+        ];
+
+        o.forEach(item => {
+            it(item.desc, done => {
+                const output = _parseStopsListData(item.input);
+
+                should.deepEqual(output, item.output);
+                done();
+            });
+        });
+    });
+
     describe('fetchStopsListData', () => {
         it('should succeed', done => {
             nock(bhStopsListDataUrl)
@@ -101,20 +198,6 @@ describe('bh', () => {
             _fetchStopsListData()
                 .then(res => {
                     res.length.should.not.equal(0);
-                    done();
-                })
-                .catch(err => done(err));
-        });
-
-        it('should succeed and return empty array when data is empty', done => {
-            nock(bhStopsListDataUrl)
-                .get(bhStopsListDataPage)
-                .query(bhStopsListDataQuery)
-                .reply(200, {});
-
-            _fetchStopsListData()
-                .then(res => {
-                    res.length.should.equal(0);
                     done();
                 })
                 .catch(err => done(err));
