@@ -1,4 +1,4 @@
-const config = require('../../lib/config');
+const config = require('../../src/config');
 
 describe('Config', () => {
     it('should return a valid setting', done => {

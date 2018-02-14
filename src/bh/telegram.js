@@ -1,4 +1,4 @@
-const bh = require('./bh');
+const api = require('./api');
 
 const busStopRegEx = new RegExp('^([a-zA-Z]+)([ ]+[a-zA-Z0-9]*)?$');
 
@@ -10,7 +10,7 @@ const busStopRegEx = new RegExp('^([a-zA-Z]+)([ ]+[a-zA-Z0-9]*)?$');
  * @returns {promise} object with the response
  */
 const createResponse = (messageId, stop, service) => {
-    return bh
+    return api
         .getData(stop, service)
         .then(res => {
             const { stopName, bearing, lastUpdate, times, services } = res;
@@ -70,7 +70,7 @@ const createResponse = (messageId, stop, service) => {
  * @returns {promise} object with the response
  */
 const createResponseLocation = (messageId, location, range) => {
-    return bh
+    return api
         .getNearbyStops(location, range)
         .then(res => {
             const message = 'Bus stops found:\n';

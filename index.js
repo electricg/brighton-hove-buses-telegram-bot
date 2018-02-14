@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
-const config = require('./lib/config');
-const telegram = require('./lib/telegram');
+const config = require('./src/config');
+const telegram = require('./src/bh/telegram');
 
 const token = config.get('telegramToken');
 const url = config.get('appUrl');

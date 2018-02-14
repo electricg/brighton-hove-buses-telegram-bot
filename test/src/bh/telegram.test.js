@@ -4,7 +4,7 @@ const rewire = require('rewire');
 const should = require('should');
 const sinon = require('sinon');
 
-const _telegram = rewire('../../lib/telegram');
+const _telegram = rewire('../../../src/bh/telegram');
 const _createResponse = _telegram.__get__('createResponse');
 const _createResponseLocation = _telegram.__get__('createResponseLocation');
 const _sendResponse = _telegram.__get__('sendResponse');
@@ -12,19 +12,19 @@ const _findMatches = _telegram.__get__('findMatches');
 const _sendLocation = _telegram.__get__('sendLocation');
 const _askLocation = _telegram.__get__('askLocation');
 
-const _bh = rewire('../../lib/bh');
-const bhSingleStopDataUrl = _bh.__get__('bhSingleStopDataUrl');
-const bhStopsListDataUrl = _bh.__get__('bhStopsListDataUrl');
-const bhSingleStopDataQuery = _bh.__get__('bhSingleStopDataQuery');
-const bhStopsListDataQuery = _bh.__get__('bhStopsListDataQuery');
-const bhSingleStopDataPage = _bh.__get__('bhSingleStopDataPage');
-const bhStopsListDataPage = _bh.__get__('bhStopsListDataPage');
+const _api = rewire('../../../src/bh/api');
+const bhSingleStopDataUrl = _api.__get__('bhSingleStopDataUrl');
+const bhStopsListDataUrl = _api.__get__('bhStopsListDataUrl');
+const bhSingleStopDataQuery = _api.__get__('bhSingleStopDataQuery');
+const bhStopsListDataQuery = _api.__get__('bhStopsListDataQuery');
+const bhSingleStopDataPage = _api.__get__('bhSingleStopDataPage');
+const bhStopsListDataPage = _api.__get__('bhStopsListDataPage');
 
-const content6509 = fs.readFileSync('./test/data/6509.html', 'utf8');
-const content65097 = fs.readFileSync('./test/data/6509-7.html', 'utf8');
-const content000 = fs.readFileSync('./test/data/000.html', 'utf8');
-const contentxxx = fs.readFileSync('./test/data/xxx.html', 'utf8');
-const contentstops = fs.readFileSync('./test/data/stops.html', 'utf8');
+const content6509 = fs.readFileSync('./test/data/bh/6509.html', 'utf8');
+const content65097 = fs.readFileSync('./test/data/bh/6509-7.html', 'utf8');
+const content000 = fs.readFileSync('./test/data/bh/000.html', 'utf8');
+const contentxxx = fs.readFileSync('./test/data/bh/xxx.html', 'utf8');
+const contentstops = fs.readFileSync('./test/data/bh/stops.html', 'utf8');
 
 const stopid = '6509';
 const stopcode = 'briapaw';
