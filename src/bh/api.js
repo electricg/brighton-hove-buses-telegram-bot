@@ -141,7 +141,8 @@ const fetchStopData = (stop, service) => {
     return new Promise((resolve, reject) => {
         const possibleErrors = [
             'no matching stop found',
-            'Please select a stop from the map or search to see live departures'
+            'Please select a stop from the map or search to see live departures',
+            'could not find stop with naptan code'
         ];
         let qs = Object.assign({}, bhSingleStopDataQuery);
 
@@ -187,6 +188,18 @@ const fetchStopData = (stop, service) => {
 
                 resolve(body);
                 return;
+            }
+
+            if (statusCode === 500) {
+                for (let i = 0; i < possibleErrors.length; i++) {
+                    if (body.indexOf(possibleErrors[i]) !== -1) {
+                        reject({
+                            statusCode: 404,
+                            body: 'no matching stop found'
+                        });
+                        return;
+                    }
+                }
             }
 
             reject({
